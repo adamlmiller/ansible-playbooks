@@ -1,0 +1,85 @@
+###################################################
+#                                                 #
+# Install LAMP stack on web servers               #
+#                                                 #
+# Ansible Playbook to install a LAMP stack on     #
+# servers defined as webservers                   #
+#                                                 #
+###################################################
+
+---
+- hosts: webservers
+  become: true
+  vars:
+    dir_downloads: /home/deploy/downloads/
+    url_filebeat: https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-5.6.2-x86_64.rpm
+  tasks:
+    - name: Remove Install Logs
+      shell: rm -rf /root/*
+
+    - name: Remove Unused Packages
+      yum: name={{ item }} state=absent
+      with_items:
+       - audit
+       - cronie
+       - cronie-anacron
+       - crontabs
+       - iscsi-initiator-utils
+       - lvm2
+       - lvm2-libs
+       - postfix
+
+    - name: Adjust System Startup Services
+      shell: chkconfig --level 123456 blk-availability off;chkconfig --level 123456 ip6tables off;chkconfig --level 123456 iptables off;chkconfig --level 123456 mdmonitor off;chkconfig --level 123456 multipathd off;chkconfig --level 123456 netconsole off;chkconfig --level 123456 netfs off;chkconfig --level 123456 network off;chkconfig --level 123456 rdisc off;chkconfig --level 123456 restorecond off;chkconfig --level 123456 rsyslog off;chkconfig --level 123456 saslauthd off;chkconfig --level 123456 sshd off;chkconfig --level 123456 udev-post off;chkconfig --level 345 network on;chkconfig --level 345 rsyslog on;chkconfig --level 345 sshd on;
+
+    - name: Update Base OS Packages
+      yum:
+        name: '*'
+        state: latest
+    - name: Install Much Needed Packages
+      yum:
+        name: mlocate
+        state: latest
+      yum:
+        name: screen
+        state: latest
+      yum:
+        name: wget
+        state: latest
+
+    - name: CleanUp YUM
+      shell: yum -y clean all
+
+    - name: Rebuildb RPM Database
+      shell: rpm --rebuilddb
+
+    - name: Create mlocate Database
+      shell: updatedb
+
+    - name: Install Apache and PHP
+      yum: name={{ item }} state=latest
+      with_items:
+        - httpd
+        - php
+        - php-recode
+        - php-cli
+        - php-gd
+        - php-common
+        - php-pdo
+        - php-pear
+        - php-xml
+        - php-mbstring
+        - php-mysql
+        - php-xmlrpc
+        - php-process
+
+    - name: Create Downloads Directory
+      file: path={{ dir_downloads }} state=directory owner=deploy group=deploy mode=0755
+
+    - name: Download Filebeat
+      get_url: url={{ url_filebeat }} dest={{ dir_downloads }} mode=0755
+
+    - name: Install Filebeat
+      yum:
+        name: /home/deploy/downloads/filebeat-5.6.2-x86_64.rpm
+        state: present

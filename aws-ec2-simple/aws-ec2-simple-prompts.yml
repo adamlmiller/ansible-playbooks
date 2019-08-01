@@ -1,0 +1,95 @@
+###################################################
+#                                                 #
+# Create Simple AWS EC2 Instance with Prompts     #
+#                                                 #
+# Ansible Playbook to create an AWS EC2 instance  #
+# with prompts                                    #
+#                                                 #
+###################################################
+---
+- name: Create Simple AWS EC2 Instance with Prompts         # Script Name
+  hosts: localhost                                          # Hosts
+  connection: local                                         # Connection
+  gather_facts: false                                       # Gather facts?
+  vars_prompt:                                              # Input from user
+    - name: "access_key"                                    # AWS Access Key
+      prompt: "AWS Access Key"                              # The prompt the user sees
+      private: yes                                          # Show the users input while typing
+    - name: "access_secret"                                 # AWS Access Secret
+      prompt: "AWS Access Secret"                           # The prompt the user sees
+      private: yes                                          # Show the users input while typing
+    - name: "public_ip"                                     # Assign Public IP?
+      prompt: "Assign Public IP?"                           # The prompt the user sees
+      private: no                                           # Show the users input while typing
+      default: yes                                          # Default value
+    - name: "count_instances"                               # Number of instances to launch
+      prompt: "Number of Instances"                         # The prompt the user sees
+      private: no                                           # Show the users input while typing
+      default: 1                                            # Default value
+    - name: "ssh_key_name"                                  # SSH Key to use
+      prompt: "SSH Key Name"                                # The prompt the user sees
+      private: no                                           # Show the users input while typing
+    - name: "security_groups"                               # Security Groups to assign
+      prompt: "Security Group(s)"                           # The prompt the user sees
+      private: no                                           # Show the users input while typing
+      default: 'default'                                    # Default value
+    - name: "instance_type"                                 # AWS Instance Type
+      prompt: "Instance Type"                               # The prompt the user sees
+      private: no                                           # Show the users input while typing
+    - name: "aws_ami"                                       # AWS AMI to install
+      prompt: "AWS AMI"                                     # The prompt the user sees
+      private: no                                           # Show the users input while typing
+    - name: "ip_private"                                    # Private IP Address to assign
+      prompt: "Private IP"                                  # The prompt the user sees
+      private: no                                           # Show the users input while typing
+    - name: "aws_region"                                    # AWS Region to use
+      prompt: "AWS Region"                                  # The prompt the user sees
+      private: no                                           # Show the users input while typing
+    - name: "term_protection"                               # Whether to enable termination protection or not
+      prompt: "Termination Protection"                      # The prompt the user sees
+      private: no                                           # Show the users input while typing
+      default: yes                                          # Default value
+    - name: "aws_subnet"                                    # AWS Subnet to use
+      prompt: "Subnet"                                      # The prompt the user sees
+      private: no                                           # Show the users input while typing
+    - name: "aws_zone"                                      # AWS Zone to use
+      prompt: "AWS Zone"                                    # The prompt the user sees
+      private: no                                           # Show the users input while typing
+    - name: "vol_device_name"                               # Volume Device Name
+      prompt: "Volume - Device Name"                        # The prompt the user sees
+      private: no                                           # Show the users input while typing
+    - name: "vol_type"                                      # Volume Device Type
+      prompt: "Volume - Type"                               # The prompt the user sees
+      private: no                                           # Show the users input while typing
+    - name: "vol_size"                                      # Volume Size (GB)
+      prompt: "Volume - Size (GB)"                          # The prompt the user sees
+      private: no                                           # Show the users input while typing
+    - name: "vol_delete_term"                               # Whether to delete volume on instance termination or not
+      prompt: "Volume - Delete on Termination"              # The prompt the user sees
+      private: no                                           # Show the users input while typing
+      default: true                                         # Default value
+  tasks:
+    - name: Creating EC2 Instance                           # Script Name
+      ec2:
+        assign_public_ip: "{{ public_ip }}"                 # Assign Public IP Address
+        aws_access_key: "{{ access_key }}"                  # AWS Access Key
+        aws_secret_key: "{{ access_secret }}"               # AWS Secret Key
+        count: "{{ count_instances }}"                      # Number of instances to launch
+        key_name: "{{ ssh_key_name }}"                      # SSH Key to use
+        group: "{{ security_groups }}"                      # Security Groups to assign
+        instance_type: "{{ instance_type }}"                # AWS EC2 Instance Type
+        image: "{{ aws_ami }}"                              # AMI
+        private_ip: "{{ ip_private }}"                      # Instances Private IP Address
+        region: "{{ aws_region }}"                          # The region to deploy the instance in
+        state: present                                      # Create or Terminate
+        termination_protection: "{{ term_protection }}"     # Termination Protection
+        volumes:                                            # Volumes to create and attach
+          - device_name: "{{ vol_device_name }}"            # Volume Device Name
+            volume_type: "{{ vol_type }}"                   # Volume Type
+            volume_size: "{{ vol_size }}"                   # Volume Size (GB)
+            delete_on_termination: "{{ vol_delete_term }}"  # Delete volume when instance is terminated
+        vpc_subnet_id: "{{ aws_subnet }}"                   # VPC Subnet ID
+        wait: true                                          # Wait for the instance to reach its desired state before returning
+        wait_timeout: 500                                   # Wait for 5 seconds
+        zone: "{{ aws_zone }}"                              # AWS Zone
+      register: instance

@@ -1,0 +1,37 @@
+###################################################
+#                                                 #
+# Create Simple AWS EC2 Instance                  #
+#                                                 #
+# Ansible Playbook to create an AWS EC2 instance  #
+#                                                 #
+###################################################
+---
+- name: Create Simple AWS EC2 Instance              # Script Name
+  hosts: localhost                                  # Hosts
+  connection: local                                 # Connection
+  gather_facts: false                               # Gather facts?
+  tasks:
+    - name: Creating EC2 Instance                     # Script Name
+      ec2:
+        assign_public_ip: yes                         # Assign Public IP Address
+        aws_access_key: my_key                        # AWS Access Key
+        aws_secret_key: my_secret                     # AWS Secret Key
+        count: 1                                      # Number of instances to launch
+        key_name: my_ssh_key                          # SSH Key to use
+        group: ['default']                            # Security Groups to assign
+        instance_type: t2.small                       # AWS EC2 Instance Type
+        image: my_ami_id                              # AMI
+        private_ip: xxx.xxx.xxx.xxx                   # Instances Private IP Address
+        region: aws_region                            # The region to deploy the instance in
+        state: present                                # Create or Terminate
+        termination_protection: yes                   # Termination Protection
+        volumes:                                      # Volumes to create and attach
+          - device_name: /dev/xvda                    # Volume Device Name
+            volume_type: gp2                          # Volume Type
+            volume_size: 8                            # Volume Size (GB)
+            delete_on_termination: true               # Delete volume when instance is terminated
+        vpc_subnet_id: my_subnet_id                   # VPC Subnet ID
+        wait: true                                    # Wait for the instance to reach its desired state before returning
+        wait_timeout: 500                             # Wait for 5 seconds
+        zone: aws_zone                                # AWS Zone
+      register: instance                              # ?w
